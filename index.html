@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="./Camera.js"></script>
+</head>
+
+<body>
+
+  <button id="js-openCam">打开</button>
+  <button id="js-closeCam">关闭</button>
+  <button id="js-kacha">拍照</button>
+  <!-- <button id="js-zoomIn">放大</button>
+  <button id="js-zoomOut">缩小</button> -->
+  <br>
+
+  <video width="640" height="480"></video>
+  <div id="list"></div>
+</body>
+
+</html>
+
+<script>
+
+  const elOpenCam = document.querySelector('#js-openCam');
+  const elCloseCam = document.querySelector('#js-closeCam');
+  const elKacha = document.querySelector('#js-kacha');
+  const elZoomIn = document.querySelector('#js-zoomIn');
+  const elZoomOut = document.querySelector('#js-zoomOut');
+  const video = document.querySelector('video');
+
+  const camera = new Camera(video);
+
+
+  elOpenCam.addEventListener('click', camera.open.bind(camera));
+  elCloseCam.addEventListener('click', camera.close.bind(camera))
+  elKacha.addEventListener('click', camera.kacha.bind(camera))
+</script>
