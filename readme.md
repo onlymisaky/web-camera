@@ -4,7 +4,7 @@
 
 ## 用法
 
-1. 需要 `http ` 支持，或者 `file` 协议
+1. 需要 `https` 支持，或者 `file` 协议
 2. 同时需要用户同意打开摄像头
 
 如果想看立刻到运行效果有，可以克隆本仓库代码，然后用 `chrome` 打开 `index.html` 文件即可。
@@ -23,4 +23,4 @@ getSettings | `stream` | [MediaTrackSettings](https://developer.mozilla.org/en-U
 
 ## 提示
 
-如果希望在生产环境中使用，请用打包工具(如：[webpack](https://webpack.js.org/)、[rollup](https://rollupjs.org/guide/en)、[gulp](https://gulpjs.com/))编译为 `ES5` 语法在使用。
+如果希望在生产环境中使用，请用打包工具 (如：[webpack](https://webpack.js.org/)、[rollup](https://rollupjs.org/guide/en)、[gulp](https://gulpjs.com/) ) 编译为 `ES5` 语法在使用。
