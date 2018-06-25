@@ -1,133 +1,51 @@
 class Camera {
 
   /**
-   * @param {HTMLVideoElement} video
+   * @param {{ video: HTMLVideoElement, devicechange?: Function }} { video, devicechange }
    */
-  constructor(video) {
+  constructor({ video, devicechange }) {
     if (video instanceof HTMLVideoElement) {
       this.video = video;
-      this.runnig = false;
+      this.devicechange = devicechange || null;
+      this.running = false;
       this.mediaStream = null;
-      this.deviceId = '';
-      // todo 需要自动适配
-      this.constraints = {
-        video: {
-          // 比例最好和摄像机一样
-          // 面的比例是按照A4纸大小设定的
-          height: 2097,
-          width: 1470,
-          frameRate: {
-            max: 120,
-            min: 15,
-            ideal: 60,
-          }
-        }
-      }
       window.navigator.mediaDevices.addEventListener('devicechange', this.ondevicechange.bind(this));
     } else {
-      throw new Error('NO Video Element!!');
+      throw new Error('没有显示器！');
     }
   }
 
+  //#region 封装基础方法，方便调用，只考虑单个情况
+
   /**
-   * @name 打开摄像机 
-   * @returns {Promise<Camera>}
+   * @name 获取用户媒体流
+   * @param {MediaStreamConstraints} constraints
+   * @returns {Promise<MediaStream>}
    */
-  open() {
-    if (this.runnig) {
-      return Promise.resolve(this);
+  getUserMedia(constraints) {
+    if (window.navigator.mediaDevices.getUserMedia) {
+      return window.navigator.mediaDevices.getUserMedia(constraints);
     }
-    const getUserMedia = window.navigator.mediaDevices.getUserMedia;
-    if (getUserMedia) {
-      return window.navigator.mediaDevices.getUserMedia(this.constraints).then(stream => {
-        this.runnig = true;
-        this.mediaStream = stream;
-        this.deviceId = stream.getVideoTracks()[0].getSettings().deviceId;
-        this.video.srcObject = this.mediaStream;
-        this.video.play();
-        return this;
-      }).catch(err => err);
-    } else {
-      return Promise.reject('无法打开摄像头！');
-    }
-
+    return Promise.reject(new Error('无法打开摄像头！'));
   }
 
   /**
-   * @name 缩放
+   * @name 关闭媒体流
+   * @param {MediaStream} stream
+   * @returns {void}
+   */
+  stop(stream) {
+    stream.getVideoTracks()[0].stop();
+  }
+
+  /**
+   * @name 修改媒体流
    * @param {MediaStream} stream
    * @param {MediaTrackConstraints} constraints
    * @returns {Promise<Camera>}
    */
-  zoom(stream, constraints) {
-    if (this.runnig) {
-      return stream.getVideoTracks()[0].applyConstraints().then(() => this).catch(err => err);
-    } else {
-      throw new Error('请先打开摄像头！');
-    }
-  }
-
-  /**
-   * @name 拍照
-   *
-   */
-  kacha() {
-    if (this.runnig) {
-      const canvas = document.createElement('canvas');
-      const vWidth = this.video.width;
-      const vHeight = this.video.height;
-      const { aspectRatio } = this.mediaStream.getVideoTracks()[0].getSettings()
-
-      // ??? 我怎么这么傻 ???
-      // let sx, sy, sWidth, sHeight;
-      // let dx = 0;
-      // let dy = 0;
-      // let dWidth = this.constraints.video.width;
-      // let dHeight = this.constraints.video.height;
-      // if (vWidth / vHeight < aspectRatio) {
-      //   sHeight = vHeight;
-      //   sWidth = vHeight * aspectRatio;
-      //   sx = (vWidth - sWidth) / 2;
-      //   sy = 0;
-      // } else {
-      //   sWidth = vWidth;
-      //   sHeight = v / aspectRatio;
-      //   sx = 0;
-      //   sy = (vHeight - sHeight) / 2;
-      // }
-
-      let sx = 0;
-      let sy = 0;
-      let sWidth = this.constraints.video.width;
-      let sHeight = this.constraints.video.height;
-      let dx = 0; let dy = 0;
-      let dWidth = this.constraints.video.width;
-      let dHeight = this.constraints.video.height;
-      canvas.width = dWidth;
-      canvas.height = dHeight;
-      canvas.getContext('2d').drawImage(this.video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-      document.body.appendChild(canvas);
-      return canvas;
-    } else {
-      throw new Error('请先打开摄像头！');
-    }
-  }
-
-  /**
-   * @name 关闭相机
-   * @returns {Camera}
-   */
-  close() {
-    if (this.runnig) {
-      const mediaStreamTracks = this.mediaStream.getVideoTracks();
-      for (const track of mediaStreamTracks) {
-        track.stop();
-      }
-      this.mediaStream = null;
-      this.deviceId = '';
-      this.runnig = false;
-    }
-    return this;
+  applyConstraints(stream, constraints) {
+    return stream.getVideoTracks()[0].applyConstraints(constraints).then(() => this).catch(err => err);
   }
 
   /**
@@ -135,22 +53,129 @@ class Camera {
    * @returns {void}
    */
   ondevicechange() {
-    if (this.runnig) {
-      window.navigator.mediaDevices.enumerateDevices().then(devices => {
+    return this.getCameraList().then(cameraList => {
+      if (this.running) {
         var flag = false;
-        for (const device of devices) {
-          if (device.deviceId === this.deviceId) {
+        for (const camera of cameraList) {
+          if (camera.deviceId === this.getSettings(this.mediaStream).deviceId) {
             flag = true;
             break;
           }
         }
         if (!flag) {
-          console.log('哦！');
           this.close();
         }
-      });
+      }
+      if (this.devicechange) {
+        this.devicechange();
+      }
+    }).catch(err => { throw err; })
+  }
+
+  /**
+   * @name 获取媒体流的信息
+   * @param {MediaStream} stream
+   * @returns {MediaTrackSettings}
+   */
+  getSettings(stream) {
+    return stream.getVideoTracks()[0].getSettings();
+  }
+
+  /**
+   * @name 获取摄像头列表
+   * @returns {Promise<MediaDeviceInfo[]>}
+   */
+  getCameraList() {
+    return window.navigator.mediaDevices.enumerateDevices()
+      .then(list => list.filter(item => item.kind === 'videoinput'))
+      .catch(err => err);
+  }
+
+  //#endregion
+
+  /**
+   * @name 打开摄像机 
+   * @param {MediaStreamConstraints} [constraints={ video: {} }]
+   * @returns {Promise<Camera>}
+   */
+  open(constraints = { video: {} }) {
+    if (this.running) {
+      return Promise.resolve(this);
     }
-    console.log('啊！');
+    return this.getCameraList().then(cameraList => {
+      if (constraints instanceof Event) {
+        constraints = { video: {} };
+      }
+      return cameraList.length
+        ? this.getUserMedia(constraints)
+        : Promise.reject(new Error('没有摄像头！'));
+    }).then(stream => {
+      this.running = true;
+      this.mediaStream = stream;
+      this.video.srcObject = this.mediaStream;
+      this.video.play();
+      return this;
+    }).catch(err => err);
+  }
+
+  /**
+  * @name 关闭相机
+  * @returns {Camera}
+  */
+  close() {
+    if (this.running) {
+      this.stop(this.mediaStream);
+    }
+    this.running = false;
+    this.mediaStream = null;
+    return this;
+  }
+
+  /**
+   * @name 切换相机
+   * @param {string} deviceId
+   * @returns {Promise<Camera>}
+   */
+  switch(deviceId) {
+    if (this.running && deviceId === this.getSettings(this.mediaStream).deviceId) {
+      return Promise.resolve(this);
+    }
+    return this.close().open({ video: { deviceId } });
+  }
+
+  /**
+   * @name 修改分辨率
+   * @param {number} [width=640]
+   * @param {number} [height=480]
+   * @returns {Promise<Camera>}
+   */
+  setResolution(width = 640, height = 480) {
+    return this.applyConstraints(this.mediaStream, { width, height });
+  }
+
+  /**
+   * @name 拍照
+   * @returns {HTMLCanvasElement}
+   */
+  kacha() {
+    if (this.running) {
+      const settings = this.getSettings(this.mediaStream);
+      const canvas = document.createElement('canvas');
+      let sx = 0;
+      let sy = 0;
+      let sWidth = settings.width;
+      let sHeight = settings.height;
+      let dx = 0;
+      let dy = 0;
+      let dWidth = settings.width;
+      let dHeight = settings.height;
+      canvas.width = dWidth;
+      canvas.height = dHeight;
+      canvas.getContext('2d').drawImage(this.video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+      return canvas;
+    } else {
+      throw new Error('请先打开摄像头！');
+    }
   }
 
 }
