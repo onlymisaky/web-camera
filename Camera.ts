@@ -97,10 +97,11 @@ class Camera {
     return this.applyConstraints(this.mediaStream, { width, height });
   }
 
-  public kacha(): HTMLCanvasElement {
+  public kacha(cut: 'a4' | 'card'): HTMLCanvasElement {
     if (this.running) {
       const settings = this.getSettings(this.mediaStream);
       const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       let sx = 0;
       let sy = 0;
       let sWidth = settings.width;
@@ -111,11 +112,107 @@ class Camera {
       let dHeight = settings.height;
       canvas.width = dWidth;
       canvas.height = dHeight;
-      canvas.getContext('2d').drawImage(this.video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+      ctx.drawImage(this.video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+      if (cut === "a4" || cut === "card") {
+        var imageData = this.cutBlack(canvas);
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        ctx.clearRect(0, 0, dWidth, dHeight);
+        ctx.putImageData(imageData, 0, 0);
+        imageData = null;
+      }
       return canvas;
     } else {
       throw new Error('请先打开摄像头！');
     }
+  }
+
+  private cutBlack(canvas: HTMLCanvasElement): ImageData {
+    var { width, height } = canvas;
+    var ctx = canvas.getContext('2d');
+
+    var rowData = ctx.getImageData(0, height / 2, width, 1).data;
+    var row = this.getCooLen(rowData);
+
+    var colData = ctx.getImageData(width / 2, 0, 1, height).data;
+    var col = this.getCooLen(colData);
+
+    var imageData = ctx.getImageData(row.coordinate, col.coordinate, row.length, col.length);
+
+    width = null;
+    height = null;
+    ctx = null;
+    rowData = null;
+    row = null;
+    colData = null;
+    col = null;
+
+    return imageData;
+  }
+
+  private getCooLen(data: Uint8ClampedArray, tolerances: number = 7): { coordinate: number, length: number } {
+    const len = data.length;
+    let coordinate, n, length, arr;
+
+    arr = []; // 该数组用来存放已经查找出符合要求的坐标点，这些坐标点必须是连续的,若果不连续，立刻重置该数组
+    for (var i = 0; i < len; i += 4) {
+      if (!this.isBlack(data[i], data[i + 1], data[i + 2], data[i + 3])) {
+
+        coordinate = i / 4;
+
+        if (arr.length === 0) {
+          arr.push(coordinate);
+        }
+
+        else {
+          if (arr[arr.length - 1] + 1 === coordinate) {
+            arr.push(coordinate);
+          } else {
+            arr = [];
+          }
+        }
+
+        if (arr.length === tolerances) {
+          coordinate = arr[0];
+          console.log(arr);
+          break;
+        }
+
+      }
+    }
+
+    arr = [];
+    for (var i = len - 1; i >= 0; i -= 4) {
+      if (!this.isBlack(data[i - 3], data[i - 2], data[i - 1], data[i])) {
+
+        n = (i - 3) / 4;
+
+        if (arr.length === 0) {
+          arr.push(n);
+        }
+
+        else {
+          if (arr[arr.length - 1] - 1 === n) {
+            arr.push(n);
+          } else {
+            arr = [];
+          }
+        }
+
+        if (arr.length === tolerances) {
+          n = arr[0];
+          console.log(arr);
+          break;
+        }
+
+      }
+    }
+
+    return { coordinate, length: n - coordinate };
+  }
+
+  private isBlack(r: number, g: number, b: number, a: number): Boolean {
+    return r < 150 && g < 150 && b < 150;
   }
 
 }

@@ -79,12 +79,12 @@
   });
   elopenCam.addEventListener('click', function () {
     if (elCameraList.value) {
-      camera.open({ video: { deviceId: elCameraList.value } })
+      camera.open({ video: { deviceId: elCameraList.value, width: 2970, height: 2100 } })
     }
   });
   elCloseCam.addEventListener('click', camera.close.bind(camera));
   elKacha.addEventListener('click', () => {
-    const canvas = camera.kacha();
+    const canvas = camera.kacha("a4");
     elPhotoList.appendChild(canvas);
   });
   elSetResolution.addEventListener('click', () => {
