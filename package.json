@@ -1,0 +1,19 @@
+{
+  "name": "camera",
+  "version": "1.0.0",
+  "description": "web camera",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onlymisaky/camera.git"
+  },
+  "keywords": [
+    "camera"
+  ],
+  "author": "onlymisaky",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/onlymisaky/camera/issues"
+  },
+  "homepage": "https://github.com/onlymisaky/camera#readme",
+}
