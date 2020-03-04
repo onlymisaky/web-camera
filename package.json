@@ -5,17 +5,17 @@
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/onlymisaky/camera.git"
+    "url": "git+https://github.com/onlymisaky/web-camera.git"
   },
   "keywords": [
-    "camera"
+    "web camera"
   ],
   "author": "onlymisaky",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/onlymisaky/camera/issues"
+    "url": "https://github.com/onlymisaky/web-camera/issues"
   },
-  "homepage": "https://github.com/onlymisaky/camera#readme",
+  "homepage": "https://github.com/onlymisaky/web-camera#readme",
   "scripts": {
     "build": "webpack"
   },
