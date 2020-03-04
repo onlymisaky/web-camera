@@ -1,6 +1,6 @@
 {
-  "name": "camera",
-  "version": "1.0.0",
+  "name": "web-camera",
+  "version": "0.0.1",
   "description": "web camera",
   "main": "dist/index.js",
   "repository": {
@@ -16,4 +16,21 @@
     "url": "https://github.com/onlymisaky/camera/issues"
   },
   "homepage": "https://github.com/onlymisaky/camera#readme",
+  "scripts": {
+    "build": "webpack"
+  },
+  "typings": "types/index.d.ts",
+  "dependencies": {
+    "@babel/runtime": "^7.8.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.6",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.6",
+    "babel-loader": "^8.0.6",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.11"
+  }
 }

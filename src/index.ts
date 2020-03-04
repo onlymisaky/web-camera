@@ -111,3 +111,5 @@ export class Camera {
     return canvas;
   }
 }
+
+export default Camera
